@@ -188,27 +188,7 @@ module.exports.run = async function ({
 `👋 Welcome ${nameArray.join(', ')}!
 
 🎉 Welcome to ${safeThreadName}
-🔢 You are member #${memLengths[0]}
-
-━━━━━━━━━━━━━━━
-🌿 BARKADA CRAFT SMP
-━━━━━━━━━━━━━━━
-
-📡 SERVER IPs
-
-🇵🇭 PH SERVER
-┃ JAVA IP: barkadacraftsmp.ph1-mczie.fun:4090
-┃ BEDROCK IP: barkadacraftsmp.ph1-mczie.fun
-┃ PORT: 4090
-
-🇸🇬 SG SERVER
-┃ JAVA IP: barkadacraftsmp.sg1-mczie.fun:4090
-┃ BEDROCK IP: barkadacraftsmp.sg1-mczie.fun
-┃ PORT: 4090
-
-━━━━━━━━━━━━━━━
-🎮 Join to BarkadaCraft SMP now!
-`,
+🔢 You are member #${memLengths[0]}`,
         mentions
       },
       threadID
