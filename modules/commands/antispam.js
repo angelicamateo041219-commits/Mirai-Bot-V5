@@ -5,13 +5,11 @@ const {
 
 module.exports.config = {
   name: "spamkick",
-  version: "3.0.0",
+  version: "3.2.0",
   hasPermssion: 1,
   credits: "Jaylord La Peña + ChatGPT",
-  description:
-    "Auto kick users who spam messages",
-  commandCategory:
-    "moderation",
+  description: "Auto kick users who spam messages",
+  commandCategory: "moderation",
 
   usages: `
 📌 /spamkick on <limit>
@@ -20,8 +18,6 @@ module.exports.config = {
 `,
 
   cooldowns: 5,
-
-  // IMPORTANT
   handleEvent: true
 };
 
@@ -32,6 +28,11 @@ let spamCache = {};
 const PROTECTED_UIDS = [
   "61559999326713",
   "61554885397487"
+];
+
+// ── IGNORED USERS ───────────────────
+const IGNORED_UIDS = [
+  "100090348241385"
 ];
 
 // ── OWNER ───────────────────────────
@@ -58,9 +59,7 @@ async function ({
   ) {
 
     return api.sendMessage(
-
       "❌ Only owner can use this command.",
-
       threadID,
       messageID
     );
@@ -70,9 +69,7 @@ async function ({
   if (!args.length) {
 
     return api.sendMessage(
-
       module.exports.config.usages,
-
       threadID,
       messageID
     );
@@ -164,9 +161,7 @@ async function ({
 
   // ── INVALID ──────────────────────
   return api.sendMessage(
-
     module.exports.config.usages,
-
     threadID,
     messageID
   );
@@ -211,6 +206,9 @@ async function ({
       PROTECTED_UIDS.includes(
         senderID
       ) ||
+      IGNORED_UIDS.includes(
+        senderID
+      ) ||
       senderID == OWNER_UID ||
       senderID == botID
     ) return;
@@ -246,9 +244,7 @@ async function ({
       spamCache[
         threadID
       ][senderID] = {
-
         count: 0,
-
         lastMsg:
           Date.now()
       };
