@@ -3,16 +3,37 @@ const bold = require("../../utils/bold");
 
 module.exports.config = {
     name: "anti",
-    version: "5.0.0",
+    version: "5.2.0",
     hasPermssion: 1,
     credits: "BraSL + ChatGPT",
-    description: "Anti change group settings with Firebase",
+    description: "Anti system with Firebase",
     commandCategory: "group",
     usages: "/anti",
     cooldowns: 5
 };
 
-// ── HANDLE REPLY ─────────────────────
+// ── MENU ────────────────────────────
+function antiMenu() {
+
+    return `╭───────────────⭓
+│ 🛡️ ANTI SYSTEM
+├───────────────⭔
+│ 1️⃣ Anti Name
+│ 2️⃣ Anti Image
+│ 3️⃣ Anti Nickname
+│ 4️⃣ Anti Leave
+│ 5️⃣ Anti Emoji
+│ 6️⃣ Anti Theme
+│ 7️⃣ Anti Admin
+│
+│ 9️⃣ Check Status
+╰───────────────⭓
+
+💬 Reply with number
+to toggle anti system.`;
+}
+
+// ── HANDLE REPLY ───────────────────
 module.exports.handleReply = async function ({
     api,
     event,
@@ -25,7 +46,8 @@ module.exports.handleReply = async function ({
         const {
             senderID,
             threadID,
-            messageID
+            messageID,
+            body
         } = event;
 
         const {
@@ -33,15 +55,17 @@ module.exports.handleReply = async function ({
             permssion
         } = handleReply;
 
-        // ── CHECK OWNER ──────────────
-        if (author != senderID)
+        // ── CHECK OWNER ─────────────
+        if (author != senderID) {
+
             return api.sendMessage(
                 `❎ ${bold("This is not your command.")}`,
                 threadID,
                 messageID
             );
+        }
 
-        // ── GET DATABASE ─────────────
+        // ── GET DATABASE ────────────
         let dataAnti =
             await getData("antiSystem");
 
@@ -59,23 +83,26 @@ module.exports.handleReply = async function ({
         }
 
         const numbers =
-            event.body
-            .split(" ")
+            body
+            .split(/\s+/)
             .filter(i => !isNaN(i));
 
+        if (numbers.length === 0) {
+
+            return api.sendMessage(
+                `❎ ${bold("Reply with valid number.")}`,
+                threadID,
+                messageID
+            );
+        }
+
+        // ── TOGGLE SYSTEMS ──────────
         for (const num of numbers) {
 
             switch (num) {
 
                 // ── ANTI NAME ─────────
                 case "1": {
-
-                    if (permssion < 1)
-                        return api.sendMessage(
-                            `🔒 ${bold("Permission required.")}`,
-                            threadID,
-                            messageID
-                        );
 
                     const existing =
                         dataAnti.boxname.find(
@@ -91,10 +118,9 @@ module.exports.handleReply = async function ({
                                 item.threadID !== threadID
                             );
 
-                        api.sendMessage(
+                        await api.sendMessage(
                             `☑️ ${bold("Anti name:")} OFF`,
-                            threadID,
-                            messageID
+                            threadID
                         );
 
                     } else {
@@ -109,10 +135,9 @@ module.exports.handleReply = async function ({
                             name: info.threadName
                         });
 
-                        api.sendMessage(
+                        await api.sendMessage(
                             `☑️ ${bold("Anti name:")} ON ✅`,
-                            threadID,
-                            messageID
+                            threadID
                         );
                     }
 
@@ -121,13 +146,6 @@ module.exports.handleReply = async function ({
 
                 // ── ANTI IMAGE ────────
                 case "2": {
-
-                    if (permssion < 1)
-                        return api.sendMessage(
-                            `🔒 ${bold("Permission required.")}`,
-                            threadID,
-                            messageID
-                        );
 
                     const existing =
                         dataAnti.boximage.find(
@@ -143,10 +161,9 @@ module.exports.handleReply = async function ({
                                 item.threadID !== threadID
                             );
 
-                        api.sendMessage(
+                        await api.sendMessage(
                             `☑️ ${bold("Anti image:")} OFF`,
-                            threadID,
-                            messageID
+                            threadID
                         );
 
                     } else {
@@ -156,10 +173,9 @@ module.exports.handleReply = async function ({
                             url: ""
                         });
 
-                        api.sendMessage(
+                        await api.sendMessage(
                             `☑️ ${bold("Anti image:")} ON ✅`,
-                            threadID,
-                            messageID
+                            threadID
                         );
                     }
 
@@ -168,13 +184,6 @@ module.exports.handleReply = async function ({
 
                 // ── ANTI NICKNAME ─────
                 case "3": {
-
-                    if (permssion < 1)
-                        return api.sendMessage(
-                            `🔒 ${bold("Permission required.")}`,
-                            threadID,
-                            messageID
-                        );
 
                     const existing =
                         dataAnti.antiNickname.find(
@@ -190,10 +199,9 @@ module.exports.handleReply = async function ({
                                 item.threadID !== threadID
                             );
 
-                        api.sendMessage(
+                        await api.sendMessage(
                             `☑️ ${bold("Anti nickname:")} OFF`,
-                            threadID,
-                            messageID
+                            threadID
                         );
 
                     } else {
@@ -208,10 +216,9 @@ module.exports.handleReply = async function ({
                             data: info.nicknames || {}
                         });
 
-                        api.sendMessage(
+                        await api.sendMessage(
                             `☑️ ${bold("Anti nickname:")} ON ✅`,
-                            threadID,
-                            messageID
+                            threadID
                         );
                     }
 
@@ -224,14 +231,13 @@ module.exports.handleReply = async function ({
                     dataAnti.antiout[threadID] =
                         !dataAnti.antiout[threadID];
 
-                    api.sendMessage(
+                    await api.sendMessage(
                         `☑️ ${bold("Anti leave:")} ${
                             dataAnti.antiout[threadID]
                             ? "ON ✅"
                             : "OFF"
                         }`,
-                        threadID,
-                        messageID
+                        threadID
                     );
 
                     break;
@@ -281,15 +287,14 @@ module.exports.handleReply = async function ({
                         }
                     }
 
-                    api.sendMessage(
+                    await api.sendMessage(
                         `☑️ ${bold("Anti emoji:")} ${
                             dataAnti.antiemoji[threadID]
                             .enabled
                             ? "ON ✅"
                             : "OFF"
                         }`,
-                        threadID,
-                        messageID
+                        threadID
                     );
 
                     break;
@@ -340,15 +345,14 @@ module.exports.handleReply = async function ({
                         }
                     }
 
-                    api.sendMessage(
+                    await api.sendMessage(
                         `☑️ ${bold("Anti theme:")} ${
                             dataAnti.antitheme[threadID]
                             .enabled
                             ? "ON ✅"
                             : "OFF"
                         }`,
-                        threadID,
-                        messageID
+                        threadID
                     );
 
                     break;
@@ -380,14 +384,13 @@ module.exports.handleReply = async function ({
                     dataAnti.antiadmin[threadID] =
                         !dataAnti.antiadmin[threadID];
 
-                    api.sendMessage(
+                    await api.sendMessage(
                         `☑️ ${bold("Anti admin:")} ${
                             dataAnti.antiadmin[threadID]
                             ? "ON ✅"
                             : "OFF"
                         }`,
-                        threadID,
-                        messageID
+                        threadID
                     );
 
                     break;
@@ -414,7 +417,7 @@ module.exports.handleReply = async function ({
                             item.threadID === threadID
                         );
 
-                    return api.sendMessage(
+                    await api.sendMessage(
 
 `╭───────────────⭓
 │ 🛡️ ANTI STATUS
@@ -441,17 +444,19 @@ module.exports.handleReply = async function ({
 │ ${dataAnti.antiadmin[threadID] ? "✅ ON" : "❌ OFF"}
 ╰───────────────⭓`,
 
-                        threadID,
-                        messageID
+                        threadID
                     );
+
+                    break;
                 }
 
-                default:
-                    api.sendMessage(
+                default: {
+
+                    await api.sendMessage(
                         `❎ ${bold("Invalid option.")}`,
-                        threadID,
-                        messageID
+                        threadID
                     );
+                }
             }
         }
 
@@ -459,6 +464,26 @@ module.exports.handleReply = async function ({
         await setData(
             "antiSystem",
             dataAnti
+        );
+
+        // ── SEND NEW MENU ───────────
+        api.sendMessage(
+
+            antiMenu(),
+
+            threadID,
+
+            (err, info) => {
+
+                if (err) return;
+
+                global.client.handleReply.push({
+                    name: module.exports.config.name,
+                    messageID: info.messageID,
+                    author: senderID,
+                    permssion
+                });
+            }
         );
 
     } catch (e) {
@@ -485,22 +510,7 @@ module.exports.run = async function ({
 
     return api.sendMessage(
 
-`╭───────────────⭓
-│ 🛡️ ANTI SYSTEM
-├───────────────⭔
-│ 1️⃣ Anti Name
-│ 2️⃣ Anti Image
-│ 3️⃣ Anti Nickname
-│ 4️⃣ Anti Leave
-│ 5️⃣ Anti Emoji
-│ 6️⃣ Anti Theme
-│ 7️⃣ Anti Admin
-│
-│ 9️⃣ Check Status
-╰───────────────⭓
-
-💬 Reply with number
-to toggle anti system.`,
+        antiMenu(),
 
         threadID,
 
