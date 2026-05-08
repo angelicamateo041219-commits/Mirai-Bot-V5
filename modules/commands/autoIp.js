@@ -40,16 +40,31 @@ module.exports.handleEvent = async function ({
         return;
 
     return api.sendMessage(
-`━━━━━━━━━━━━━━━
-BARKADA CRAFT SMP
-📡 SERVER IPs
-🎮 JAVA
-IP: barkadacraftsmp.hk-mczie.fun:4090
+` Choose the server that gives you the best ping: 🇵🇭 PH 🇸🇬 SG 🇭🇰 HK
 
-📱 BEDROCK
-IP: barkadacraftsmp.hk-mczie.fun
-Port: 4090
-━━━━━━━━━━━━━━━`,
+━━━━━━━━━━━━━━━ 🎮 BARKADA CRAFT SMP ━━━━━━━━━━━━━━━
+
+📡 SERVER IPs
+
+🇵🇭 PH SERVER 
+┃ JAVA IP: barkadacraftsmp.ph1-mczie.fun:4090 
+
+┃ BEDROCK IP: barkadacraftsmp.ph1-mczie.fun 
+┃ PORT: 4090
+
+🇸🇬 SG SERVER 
+┃ JAVA IP: barkadacraftsmp.sg1-mczie.fun:4090 
+
+┃ BEDROCK IP: barkadacraftsmp.sg1-mczie.fun 
+┃ PORT: 4090
+
+🇭🇰 HK SERVER 
+┃ JAVA IP: barkadacraftsmp.hk-mczie.fun:4090 
+
+┃ BEDROCK IP: barkadacraftsmp.hk-mczie.fun 
+┃ PORT: 4090
+
+━━━━━━━━━━━━━━━ ✅ Piliin ang pinaka smooth at hindi lag para sayo! See you in-game! ⚔️🔥`,
         threadID,
         messageID
     );
