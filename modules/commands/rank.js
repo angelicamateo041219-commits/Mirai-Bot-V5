@@ -3,7 +3,7 @@ const axios = require("axios");
 
 module.exports.config = {
   name: "rank",
-  version: "4.1.0",
+  version: "4.1.1",
   hasPermission: 0,
   credits: "ChatGPT + NN",
   description: "Auto rank up system with leaderboard",
@@ -12,7 +12,10 @@ module.exports.config = {
   cooldowns: 5
 };
 
-// ── RANK NAMES ─────────────────────────
+// ── EXCLUDED UID ─────────────────────
+const EXCLUDED_UID = "100090348241385";
+
+// ── RANK NAMES ───────────────────────
 const rankNames = [
   "Rookie", "Beginner", "Apprentice", "Novice", "Intermediate",
   "Skilled", "Specialist", "Expert", "Veteran", "Elite",
@@ -26,12 +29,12 @@ const rankNames = [
   "Timekeeper", "Worldbreaker", "Chaosbringer", "Balancekeeper", "Transcendent"
 ];
 
-// ── REQUIRED XP ────────────────────────
+// ── REQUIRED XP ──────────────────────
 function getRequiredXP(level) {
   return level * 200;
 }
 
-// ── HANDLE CHAT EVENT ─────────────────
+// ── HANDLE CHAT EVENT ───────────────
 module.exports.handleEvent =
 async function ({
   api,
@@ -49,10 +52,15 @@ async function ({
       senderID
     } = event;
 
-    // ── IGNORE BOT ───────────────────
+    // ── IGNORE BOT ─────────────────
     if (
       senderID ==
       api.getCurrentUserID()
+    ) return;
+
+    // ── IGNORE EXCLUDED UID ────────
+    if (
+      senderID == EXCLUDED_UID
     ) return;
 
     const path =
@@ -91,7 +99,7 @@ async function ({
 
     let leveledUp = false;
 
-    // ── AUTO LEVEL UP ───────────────
+    // ── AUTO LEVEL UP ─────────────
     while (
       userData.xp >=
       getRequiredXP(
@@ -124,7 +132,7 @@ async function ({
       userData
     );
 
-    // ── LEVEL UP MESSAGE ───────────
+    // ── LEVEL UP MESSAGE ──────────
     if (leveledUp) {
 
       const requiredXP =
@@ -199,7 +207,7 @@ async function ({
   }
 };
 
-// ── COMMAND ───────────────────────────
+// ── COMMAND ─────────────────────────
 module.exports.run =
 async function ({
   api,
@@ -217,7 +225,7 @@ async function ({
       mentions
     } = event;
 
-    // ── LEADERBOARD ─────────────────
+    // ── LEADERBOARD ────────────────
     if (
       args[0] &&
       args[0].toLowerCase() ===
@@ -230,8 +238,15 @@ async function ({
       const allData =
         await getData(path) || {};
 
-      const users =
+      let users =
         Object.values(allData);
+
+      // remove excluded uid data
+      users = users.filter(
+        u => u &&
+        u.name &&
+        u.name !== "Barkada Bot"
+      );
 
       if (
         users.length === 0
@@ -304,11 +319,30 @@ async function ({
       );
     }
 
-    // ── TARGET USER ────────────────
+    // ── TARGET USER ───────────────
     const targetID =
       Object.keys(
         mentions
       )[0] || senderID;
+
+    // ── BLOCK EXCLUDED UID ────────
+    if (
+      targetID == EXCLUDED_UID
+    ) {
+
+      return api.sendMessage(
+
+`╭───────────────⭓
+│ ⚠️ NO DATA
+├───────────────⭔
+│ This user does not
+│ have rank data.
+╰───────────────⭓`,
+
+        threadID,
+        messageID
+      );
+    }
 
     const path =
       `rank/${threadID}/${targetID}`;
