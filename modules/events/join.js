@@ -1,237 +1,127 @@
-/**
- * joinNoti event — Welcome new members with text + voice
- * TEAM STARTCOPE BETA
- */
-
-const fs = require('fs-extra');
-const path = require('path');
-
-const TEMP_DIR = path.join(
-  process.cwd(),
-  'utils/data/welcome_voice_temp'
-);
-
-fs.ensureDirSync(TEMP_DIR);
+const { getData } = require("../../database.js");
 
 module.exports.config = {
-  name: 'joinNoti',
-  eventType: ['log:subscribe'],
-  version: '6.0.0',
-  credits: 'Mirai Team | TEAM STARTCOPE BETA',
-  description: 'Welcome new members with text + voice',
+  name: "joinNoti",
+  eventType: ["log:subscribe"],
+  version: "2.0.0",
+  credits: "Kim Joseph DG Bien + ChatGPT + Jaylord La Peña",
+  description: "Join Notification with welcome image and optional video",
+  dependencies: {
+    "fs-extra": "",
+    "request": "",
+    "axios": ""
+  }
 };
 
-// ── GENERATE VOICE ────────────────────────────────────
-async function generateWelcomeVoice(
-  firstNames,
-  threadName
-) {
+module.exports.run = async function ({ api, event }) {
+  const request = require("request");
+  const fs = global.nodemodule["fs-extra"];
+  const axios = require("axios");
+  const path = require("path");
 
-  try {
+  const { threadID, logMessageData } = event;
+  const addedParticipants = logMessageData.addedParticipants;
 
-    const {
-      MsEdgeTTS,
-      OUTPUT_FORMAT
-    } = require('msedge-tts');
-
-    const tts = new MsEdgeTTS();
-
-    await tts.setMetadata(
-      'en-US-GuyNeural',
-      OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3
-    );
-
-    const nameStr =
-      firstNames.slice(0, 3).join(' and ');
-
-    const greeting =
-      firstNames.length === 1
-        ? `Welcome, ${nameStr}! Great to have you in ${threadName}. Enjoy the group!`
-        : `Welcome everyone — ${nameStr}! Great to have you all in ${threadName}. Enjoy!`;
-
-    const fp = path.join(
-      TEMP_DIR,
-      `welcome_voice_${Date.now()}.mp3`
-    );
-
-    const { audioStream } =
-      await tts.toStream(greeting);
-
-    await new Promise((resolve, reject) => {
-
-      const chunks = [];
-
-      audioStream.on(
-        'data',
-        chunk => chunks.push(chunk)
-      );
-
-      audioStream.on('end', () => {
-
-        fs.writeFileSync(
-          fp,
-          Buffer.concat(chunks)
-        );
-
-        resolve();
-      });
-
-      audioStream.on('error', reject);
-
-      setTimeout(() => reject(
-        new Error('TTS timeout')
-      ), 20000);
-    });
-
-    return fp;
-
-  } catch (e) {
-
-    console.log(
-      '[JoinNoti] Voice failed:',
-      e.message
-    );
-
-    return null;
-  }
-}
-
-module.exports.run = async function ({
-  api,
-  event,
-  Users
-}) {
-
-  const { threadID } = event;
-
-  // ── BOT ADDED ───────────────────────────────────────
-  if (
-    event.logMessageData.addedParticipants.some(
-      p => p.userFbId == api.getCurrentUserID()
-    )
-  ) {
-
+  // 🧠 If bot is added to a new group
+  if (addedParticipants.some(i => i.userFbId == api.getCurrentUserID())) {
     api.changeNickname(
-      `[ ${global.config.PREFIX} ] • ${global.config.BOTNAME || 'Mirai Bot'}`,
+      `𝗕𝗢𝗧 ${global.config.BOTNAME} 【 ${global.config.PREFIX} 】`,
       threadID,
       api.getCurrentUserID()
     );
-
     return api.sendMessage(
-      `👋 Hello Everyone!\n\n` +
-      `🤖 I'm ${global.config.BOTNAME || 'Mirai Bot'}!\n` +
-      `⌨️ Prefix: ${global.config.PREFIX}\n` +
-      `📖 Type ${global.config.PREFIX}help to see commands!`,
+      `✅ BOT CONNECTED!\n\nThanks for adding me!\nUse ${global.config.PREFIX}help to see commands.\nIf there's an issue, report it using ${global.config.PREFIX}callad.`,
       threadID
     );
   }
 
-  // ── USER JOINED ─────────────────────────────────────
   try {
+    const threadInfo = await api.getThreadInfo(threadID);
+    const threadName = threadInfo.threadName || "this group";
+    const totalMembers = threadInfo.participantIDs?.length || 0;
 
-    const {
-      threadName,
-      participantIDs
-    } = await api.getThreadInfo(threadID);
+    // 🧩 Check video toggle per GC
+    const videoConfig = await getData(`welcomeVideo/${threadID}`);
+    const videoEnabled = videoConfig?.enabled || false;
 
-    const safeThreadName =
-      String(threadName || 'Group Chat')
-        .replace(/[^\x20-\x7E]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 40) || 'Group Chat';
+    for (const newParticipant of addedParticipants) {
+      const userID = newParticipant.userFbId;
+      if (userID === api.getCurrentUserID()) continue;
 
-    const nameArray = [];
-    const mentions = [];
-    const memLengths = [];
+      let userName = "Friend";
+      try {
+        const info = await api.getUserInfo(userID);
+        if (info?.[userID]?.name) userName = info[userID].name;
+      } catch {}
 
-    let i = 0;
+      const msg = `Hello ${userName}!\nWelcome to ${threadName}!\nYou're the ${totalMembers}th member in this group. Enjoy your stay! 🎉`;
 
-    for (const p of event.logMessageData.addedParticipants) {
+      const imgApi = `https://betadash-api-swordslush-production.up.railway.app/welcome?name=${encodeURIComponent(userName)}&userid=${userID}&threadname=${encodeURIComponent(threadName)}&members=${totalMembers}`;
+      const videoApi = `https://betadash-shoti-yazky.vercel.app/shotizxx?apikey=shipazu`;
 
-      nameArray.push(p.fullName);
+      const cacheDir = path.join(__dirname, "..", "commands", "cache");
+      if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
 
-      mentions.push({
-        tag: p.fullName,
-        id: p.userFbId
+      const imgPath = path.join(cacheDir, `welcome_${userID}.png`);
+      const videoPath = path.join(cacheDir, `welcome_${userID}.mp4`);
+
+      // 🖼 Send welcome image
+      await new Promise((resolve, reject) => {
+        request(imgApi)
+          .pipe(fs.createWriteStream(imgPath))
+          .on("close", resolve)
+          .on("error", reject);
       });
 
-      memLengths.push(
-        participantIDs.length - i++
-      );
+      await new Promise((resolve) => {
+        api.sendMessage({
+          body: msg,
+          attachment: fs.existsSync(imgPath) ? fs.createReadStream(imgPath) : null,
+          mentions: [{ tag: userName, id: userID }]
+        }, threadID, () => {
+          if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+          resolve();
+        });
+      });
 
-      // save user data
-      if (
-        !global.data.allUserID.includes(
-          String(p.userFbId)
-        )
-      ) {
+      // Wait 3s ⏳ then send video only if ON
+      if (!videoEnabled) continue;
+      await new Promise(r => setTimeout(r, 3000));
 
-        await Users.createData(
-          p.userFbId,
-          {
-            name: p.fullName,
-            data: {}
-          }
-        );
+      try {
+        const res = await axios.get(videoApi, { timeout: 15000 });
+        const videoUrl = res?.data?.shotiurl;
+        if (!videoUrl) continue;
 
-        global.data.allUserID.push(
-          String(p.userFbId)
-        );
+        const videoStream = await axios({
+          url: videoUrl,
+          method: "GET",
+          responseType: "stream",
+          maxRedirects: 5,
+          timeout: 30000
+        });
+
+        await new Promise((resolve, reject) => {
+          const writer = fs.createWriteStream(videoPath);
+          videoStream.data.pipe(writer);
+          writer.on("finish", resolve);
+          writer.on("error", reject);
+        });
+
+        await new Promise((resolve) => {
+          api.sendMessage({
+            body: `🎥 Welcome video for you, ${userName}!`,
+            attachment: fs.createReadStream(videoPath)
+          }, threadID, () => {
+            if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+            resolve();
+          });
+        });
+      } catch (err) {
+        console.error("⚠️ Error sending video:", err.message);
       }
     }
-
-    // ── SEND WELCOME MESSAGE ──────────────────────────
-    api.sendMessage(
-      {
-        body:
-`👋 Welcome ${nameArray.join(', ')}!
-
-🎉 Welcome to ${safeThreadName}
-🔢 You are member #${memLengths[0]}`,
-        mentions
-      },
-      threadID
-    );
-
-    // ── VOICE WELCOME ─────────────────────────────────
-    const firstNames = nameArray.map(name =>
-      name
-        .replace(/[^\x00-\x7F]/g, ' ')
-        .trim()
-        .split(/\s+/)[0] || 'friend'
-    );
-
-    generateWelcomeVoice(
-      firstNames,
-      safeThreadName
-    ).then(voicePath => {
-
-      if (!voicePath) return;
-
-      api.sendMessage(
-        {
-          attachment:
-            fs.createReadStream(voicePath)
-        },
-        threadID,
-        () => {
-
-          setTimeout(() => {
-
-            fs.remove(voicePath)
-              .catch(() => {});
-
-          }, 120000);
-        }
-      );
-    });
-
-  } catch (e) {
-
-    console.log(
-      '[JoinNoti] Error:',
-      e.message
-    );
+  } catch (err) {
+    console.error("❌ ERROR in joinNoti module:", err);
   }
 };
