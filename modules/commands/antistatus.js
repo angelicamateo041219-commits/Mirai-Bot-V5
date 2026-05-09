@@ -2,7 +2,7 @@ const { getData } = require("../../database.js");
 
 module.exports.config = {
     name: "antistatus",
-    version: "1.0.0",
+    version: "2.0.0",
     hasPermssion: 0,
     credits: "ChatGPT",
     description: "Check all anti system status",
@@ -15,23 +15,15 @@ module.exports.run = async function ({ api, event }) {
 
     const { threadID } = event;
 
-    let data = await getData("antiSystem") || {
-        boxname: [],
-        boximage: [],
-        antiNickname: [],
-        antiout: {},
-        antiemoji: {},
-        antitheme: {},
-        antiadmin: {}
-    };
+    let data = await getData("antiSystem") || {};
 
-    const name = data.boxname.some(i => i.threadID == threadID);
-    const image = data.boximage.some(i => i.threadID == threadID);
-    const nickname = data.antiNickname.some(i => i.threadID == threadID);
-    const leave = data.antiout[threadID] || false;
-    const emoji = data.antiemoji[threadID]?.enabled || false;
-    const theme = data.antitheme[threadID]?.enabled || false;
-    const admin = data.antiadmin[threadID] || false;
+    const name = !!data.boxname?.[threadID];
+    const image = !!data.boximage?.[threadID];
+    const nickname = !!data.antiNickname?.[threadID];
+    const leave = !!data.antiout?.[threadID];
+    const emoji = data.antiemoji?.[threadID]?.enabled || false;
+    const theme = data.antitheme?.[threadID]?.enabled || false;
+    const admin = !!data.antiadmin?.[threadID];
 
     return api.sendMessage(
 `╭───────────────⭓
