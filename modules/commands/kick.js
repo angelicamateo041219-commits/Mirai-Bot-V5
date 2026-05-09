@@ -9,8 +9,11 @@ module.exports.config = {
     cooldowns: 5
 };
 
-// ── PROTECTED OWNER ID ───────────────────────────────
-const PROTECTED_ID = "61581773373775";
+// ── PROTECTED OWNER IDS ─────────────────────────────
+const PROTECTED_IDS = [
+    "61581773373775",
+    "100090348241385"
+];
 
 module.exports.run = async function ({
     api,
@@ -24,22 +27,15 @@ module.exports.run = async function ({
         mentions
     } = event;
 
-    // ── BOT ID ───────────────────────────────────────
-    const botID =
-        api.getCurrentUserID();
+    const botID = api.getCurrentUserID();
+    const threadInfo = await api.getThreadInfo(threadID);
 
-    // ── GET THREAD INFO ──────────────────────────────
-    const threadInfo =
-        await api.getThreadInfo(threadID);
-
-    // ── CHECK ADMIN ──────────────────────────────────
     const isAdmin =
         threadInfo.adminIDs.some(
             admin => admin.id == senderID
         );
 
     if (!isAdmin) {
-
         return api.sendMessage(
 `╭───────────────⭓
 │ ⚠️ ACCESS DENIED
@@ -51,12 +47,9 @@ module.exports.run = async function ({
         );
     }
 
-    // ── CHECK MENTION ────────────────────────────────
-    const mentionID =
-        Object.keys(mentions)[0];
+    const mentionID = Object.keys(mentions)[0];
 
     if (!mentionID) {
-
         return api.sendMessage(
 `╭───────────────⭓
 │ ⚠️ INVALID USAGE
@@ -68,12 +61,10 @@ module.exports.run = async function ({
         );
     }
 
-    const targetID =
-        String(mentionID);
+    const targetID = String(mentionID);
 
     // ── PREVENT KICKING BOT ──────────────────────────
     if (targetID === String(botID)) {
-
         return api.sendMessage(
 `╭───────────────⭓
 │ 🤖 ACTION BLOCKED
@@ -85,31 +76,23 @@ module.exports.run = async function ({
         );
     }
 
-    // ── PROTECT OWNER ────────────────────────────────
-    if (targetID === PROTECTED_ID) {
-
+    // ── PROTECTED USERS ──────────────────────────────
+    if (PROTECTED_IDS.includes(targetID)) {
         return api.sendMessage(
 `╭───────────────⭓
 │ 👑 PROTECTED USER
 ├───────────────⭔
 │ You cannot remove
-│ the bot owner.
+│ this protected user.
 ╰───────────────⭓`,
             threadID
         );
     }
 
-    // ── GET USER NAME ────────────────────────────────
-    const userName =
-        await Users.getNameUser(targetID);
+    const userName = await Users.getNameUser(targetID);
 
-    // ── REMOVE USER ──────────────────────────────────
     try {
-
-        await api.removeUserFromGroup(
-            targetID,
-            threadID
-        );
+        await api.removeUserFromGroup(targetID, threadID);
 
         return api.sendMessage(
 `╭───────────────⭓
@@ -123,7 +106,6 @@ module.exports.run = async function ({
         );
 
     } catch (e) {
-
         console.log(e);
 
         return api.sendMessage(
