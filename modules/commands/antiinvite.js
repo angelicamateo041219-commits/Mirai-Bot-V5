@@ -24,7 +24,7 @@ const INVITE_REGEX = [
     /(pasok\s+kayo).*(gc|server)/i
 ];
 
-// ── MESSENGER GC LINK (VERY IMPORTANT) ─────────────
+// ── MESSENGER GC LINK DETECTION ───────────────────
 const MESSENGER_LINK_REGEX =
 /(https?:\/\/)?(www\.)?(m\.me\/j\/|messenger\.com\/t\/|fb\.com\/messages\/)/i;
 
@@ -35,7 +35,7 @@ const BYPASS_IDS = [
     "61581773373775"
 ];
 
-// ── CONTEXT FILTER (ANTI FALSE POSITIVE) ──────────
+// ── CONTEXT FILTER ────────────────────────────────
 function isExternalInvite(msg) {
 
     const SAFE_WORDS = [
@@ -74,7 +74,7 @@ function isInviteMessage(msg) {
 
 module.exports.config = {
     name: "antiinvite",
-    version: "9.0.0",
+    version: "10.0.0",
     hasPermssion: 1,
     credits: "ChatGPT",
     description: "Anti Invite (Messenger GC + Smart Detection)",
@@ -96,16 +96,15 @@ module.exports.handleEvent = async function ({ api, event }) {
 
     const msg = body.toLowerCase();
 
-    // 🔥 STEP 1: detect messenger GC link
+    // 🔥 Messenger GC link priority
     const isMessengerLink = MESSENGER_LINK_REGEX.test(msg);
 
-    // 🔥 STEP 2: detect text invite
     if (!isMessengerLink) {
         if (!isInviteMessage(msg)) return;
         if (!isExternalInvite(msg)) return;
     }
 
-    // ── IGNORE ADMINS ─────────────────────────────
+    // ── CHECK ADMIN ───────────────────────────────
     const threadInfo = await api.getThreadInfo(threadID);
     const isAdmin = threadInfo.adminIDs.some(a => a.id == senderID);
     if (isAdmin) return;
@@ -136,10 +135,9 @@ module.exports.handleEvent = async function ({ api, event }) {
 ├───────────────⭔
 │ Dear ${name},
 │
-│ Sharing Messenger GC
-│ invite links or inviting
-│ members to external
-│ groups/servers is strictly
+│ Sharing Messenger GC links
+│ or inviting members to
+│ external groups is strictly
 │ prohibited.
 │
 │ 📜 GC Rule No. 4
@@ -168,9 +166,8 @@ module.exports.handleEvent = async function ({ api, event }) {
 │ from the group.
 │
 │ Reason:
-│ Sharing Messenger links
-│ or repeated external
-│ invitations.
+│ Repeated external invites
+│ or Messenger GC links.
 ╰───────────────⭓`,
                 threadID
             );
@@ -180,10 +177,13 @@ module.exports.handleEvent = async function ({ api, event }) {
     }
 };
 
-// ── COMMAND ───────────────────────────────────────
+// ── COMMAND (FIXED) ───────────────────────────────
 module.exports.run = async function ({ api, event }) {
 
-    const { threadID, senderID, args } = event;
+    const { threadID, senderID, body } = event;
+
+    // 🔥 FIX: get args manually
+    const args = body.split(" ").slice(1);
 
     const threadInfo = await api.getThreadInfo(threadID);
     const isAdmin = threadInfo.adminIDs.some(a => a.id == senderID);
@@ -201,9 +201,10 @@ module.exports.run = async function ({ api, event }) {
 `╭───────────────⭓
 │ ✅ ANTI-INVITE ENABLED
 ├───────────────⭔
+│ Protection is now active.
+│
 │ Messenger GC links and
-│ external invites are now
-│ automatically detected.
+│ external invites will be blocked.
 ╰───────────────⭓`,
             threadID
         );
@@ -216,11 +217,14 @@ module.exports.run = async function ({ api, event }) {
 `╭───────────────⭓
 │ ❌ ANTI-INVITE DISABLED
 ├───────────────⭔
-│ Protection has been turned off.
+│ Protection turned off.
 ╰───────────────⭓`,
             threadID
         );
     }
 
-    return api.sendMessage("Usage: /antiinvite on | off", threadID);
+    return api.sendMessage(
+"Usage: /antiinvite on | off",
+        threadID
+    );
 };
