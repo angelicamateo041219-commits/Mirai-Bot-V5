@@ -14,7 +14,7 @@ module.exports.config = {
 module.exports.run = async ({ api, event, args }) => {
     const { threadID, senderID } = event;
 
-    if (senderID != "1559999326713") return;
+    if (senderID != "61559999326713") return;
 
     let data = await getData("antiSystem") || {};
     if (!data.emoji) data.emoji = {};
