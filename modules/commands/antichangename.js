@@ -7,7 +7,7 @@ module.exports.config = {
     credits: "ChatGPT",
     description: "Toggle anti group name change",
     commandCategory: "group",
-    usages: "/antichangename on/off",
+    usages: "/anticname on/off",
     cooldowns: 5
 };
 
