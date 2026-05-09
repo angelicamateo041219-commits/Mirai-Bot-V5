@@ -1,7 +1,7 @@
 const { getData, setData } = require("../../database.js");
 
 module.exports.config = {
-    name: "antichangename",
+    name: "anticname",
     version: "2.0.0",
     hasPermssion: 0,
     credits: "ChatGPT",
