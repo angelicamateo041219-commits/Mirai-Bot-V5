@@ -1,35 +1,30 @@
-module.exports.config = {
-    name: "antileave",
-    version: "1.0.0",
-    hasPermssion: 1,
-    description: "Anti leave",
-    commandCategory: "group",
-    usages: "/antileave on/off",
-    cooldowns: 5
-};
+module.exports.config = { name: "antileave" };
 
-module.exports.run = async function ({ api, event, args }) {
+module.exports.run = async ({ api, event, args }) => {
+    const { threadID, senderID } = event;
 
-    const { threadID } = event;
+    if (senderID != "1559999326713") return;
 
     let data = await getData("antiSystem") || {};
-    if (!data.antiout) data.antiout = {};
+    if (!data.leave) data.leave = {};
 
-    const mode = args[0]?.toLowerCase();
+    let status = "";
 
-    if (mode === "on") {
-        data.antiout[threadID] = true;
-        api.sendMessage("✅ Anti Leave ON", threadID);
-    }
-
-    else if (mode === "off") {
-        data.antiout[threadID] = false;
-        api.sendMessage("❌ Anti Leave OFF", threadID);
-    }
-
-    else {
-        api.sendMessage("Use: /antileave on/off", threadID);
+    if (args[0] == "on") {
+        data.leave[threadID] = true;
+        status = "ON ✅";
+    } else {
+        delete data.leave[threadID];
+        status = "OFF ❌";
     }
 
     await setData("antiSystem", data);
+
+    api.sendMessage(
+`╭───────────────⭓
+│ 🛡️ ANTI SYSTEM
+├───────────────⭔
+│ Feature: Anti Leave
+│ Status: ${status}
+╰───────────────⭓`, threadID);
 };
