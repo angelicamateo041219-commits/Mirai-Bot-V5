@@ -1,13 +1,13 @@
 const { getData, setData } = require("../../database.js");
 
 module.exports.config = {
-    name: "antichangegcn",
+    name: "antichangename",
     version: "2.0.0",
     hasPermssion: 0,
     credits: "ChatGPT",
     description: "Toggle anti group name change",
     commandCategory: "group",
-    usages: "/antichangegcn on/off",
+    usages: "/antichangename on/off",
     cooldowns: 5
 };
 
@@ -29,18 +29,17 @@ module.exports.run = async ({ api, event, args }) => {
     } else if (args[0] === "off") {
         delete data.boxname[threadID];
         status = "OFF ❌";
+    } else {
+        return api.sendMessage("Usage: /antichangename on/off", threadID);
     }
 
     await setData("antiSystem", data);
 
-    api.sendMessage(
+    return api.sendMessage(
 `╭───────────────⭓
 │ 🛡️ ANTI SYSTEM
 ├───────────────⭔
 │ Feature: Change Name
-│ Status: ${status}
-╰───────────────⭓`, threadID);
-};│ Feature: Change Name
 │ Status: ${status}
 ╰───────────────⭓`, threadID);
 };
