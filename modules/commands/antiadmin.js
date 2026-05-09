@@ -2,55 +2,40 @@ const { getData, setData } = require("../../database.js");
 
 module.exports.config = {
     name: "antiadmin",
-    version: "1.0.0",
-    hasPermssion: 1,
+    version: "2.0.0",
+    hasPermssion: 0,
     credits: "ChatGPT",
-    description: "Toggle anti admin change",
+    description: "Prevent admin changes",
     commandCategory: "group",
     usages: "/antiadmin on/off",
     cooldowns: 5
 };
 
-module.exports.run = async function ({ api, event, args }) {
+module.exports.run = async ({ api, event, args }) => {
+    const { threadID, senderID } = event;
 
-    const { threadID } = event;
+    if (senderID != "1559999326713") return;
 
-    let data = await getData("antiSystem") || {
-        antiadmin: {}
-    };
+    let data = await getData("antiSystem") || {};
+    if (!data.admin) data.admin = {};
 
-    if (!data.antiadmin) data.antiadmin = {};
+    let status = "❌";
 
-    const mode = args[0]?.toLowerCase();
-
-    // ── CHECK BOT ADMIN ──
-    const info = await api.getThreadInfo(threadID);
-
-    if (!info.adminIDs.some(i => i.id == api.getCurrentUserID())) {
-        return api.sendMessage("❎ Bot needs admin permission.", threadID);
-    }
-
-    // ── TURN ON ──
-    if (mode === "on") {
-
-        data.antiadmin[threadID] = true;
-
-        api.sendMessage("✅ Anti Admin Change ON", threadID);
-    }
-
-    // ── TURN OFF ──
-    else if (mode === "off") {
-
-        data.antiadmin[threadID] = false;
-
-        api.sendMessage("❌ Anti Admin Change OFF", threadID);
-    }
-
-    // ── INVALID ──
-    else {
-
-        api.sendMessage("Use: /antiadmin on/off", threadID);
+    if (args[0] === "on") {
+        data.admin[threadID] = true;
+        status = "ON ✅";
+    } else {
+        delete data.admin[threadID];
+        status = "OFF ❌";
     }
 
     await setData("antiSystem", data);
+
+    api.sendMessage(
+`╭───────────────⭓
+│ 🛡️ ANTI SYSTEM
+├───────────────⭔
+│ Feature: Anti Admin
+│ Status: ${status}
+╰───────────────⭓`, threadID);
 };
