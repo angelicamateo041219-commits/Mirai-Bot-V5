@@ -10,7 +10,7 @@ module.exports.config = {
 };
 
 // ── PROTECTED OWNER ID ───────────────────────────────
-const PROTECTED_ID = "61559999326713";
+const PROTECTED_ID = "61581773373775";
 
 module.exports.run = async function ({
     api,
