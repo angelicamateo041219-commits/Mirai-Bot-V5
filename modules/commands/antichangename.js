@@ -1,13 +1,13 @@
 const { getData, setData } = require("../../database.js");
 
 module.exports.config = {
-    name: "anticname",
+    name: "antichangegcn",
     version: "2.0.0",
     hasPermssion: 0,
     credits: "ChatGPT",
     description: "Toggle anti group name change",
     commandCategory: "group",
-    usages: "/anticname on/off",
+    usages: "/antichangegcn on/off",
     cooldowns: 5
 };
 
