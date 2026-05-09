@@ -3,7 +3,7 @@ const bold = require("../../utils/bold");
 
 module.exports.config = {
     name: "anti",
-    version: "5.3.0",
+    version: "6.0.0",
     hasPermssion: 1,
     credits: "BraSL + ChatGPT",
     description: "Anti system with Firebase",
@@ -37,8 +37,7 @@ to toggle anti system.`;
 module.exports.handleReply = async function ({
     api,
     event,
-    handleReply,
-    Threads
+    handleReply
 }) {
 
     try {
@@ -46,7 +45,6 @@ module.exports.handleReply = async function ({
         const {
             senderID,
             threadID,
-            messageID,
             body
         } = event;
 
@@ -58,13 +56,6 @@ module.exports.handleReply = async function ({
         // ── CHECK OWNER ─────────────
         if (author != senderID)
             return;
-
-        // ── REMOVE OLD HANDLE REPLY ─
-        global.client.handleReply =
-            global.client.handleReply.filter(
-                item =>
-                item.messageID != handleReply.messageID
-            );
 
         // ── GET DATABASE ────────────
         let dataAnti =
@@ -84,15 +75,20 @@ module.exports.handleReply = async function ({
         }
 
         const num =
-            body.trim();
+            body
+            .trim()
+            .replace(/[^\d]/g, "");
 
-        // ── ANTI NAME ───────────────
+        // ────────────────────────────
+        // 1️⃣ ANTI NAME
+        // ────────────────────────────
+
         if (num === "1") {
 
             const existing =
                 dataAnti.boxname.find(
                     item =>
-                    item.threadID === threadID
+                    item.threadID == threadID
                 );
 
             if (existing) {
@@ -100,7 +96,7 @@ module.exports.handleReply = async function ({
                 dataAnti.boxname =
                     dataAnti.boxname.filter(
                         item =>
-                        item.threadID !== threadID
+                        item.threadID != threadID
                     );
 
                 await api.sendMessage(
@@ -127,13 +123,16 @@ module.exports.handleReply = async function ({
             }
         }
 
-        // ── ANTI IMAGE ──────────────
+        // ────────────────────────────
+        // 2️⃣ ANTI IMAGE
+        // ────────────────────────────
+
         else if (num === "2") {
 
             const existing =
                 dataAnti.boximage.find(
                     item =>
-                    item.threadID === threadID
+                    item.threadID == threadID
                 );
 
             if (existing) {
@@ -141,7 +140,7 @@ module.exports.handleReply = async function ({
                 dataAnti.boximage =
                     dataAnti.boximage.filter(
                         item =>
-                        item.threadID !== threadID
+                        item.threadID != threadID
                     );
 
                 await api.sendMessage(
@@ -153,7 +152,7 @@ module.exports.handleReply = async function ({
 
                 dataAnti.boximage.push({
                     threadID,
-                    url: ""
+                    enabled: true
                 });
 
                 await api.sendMessage(
@@ -163,13 +162,16 @@ module.exports.handleReply = async function ({
             }
         }
 
-        // ── ANTI NICKNAME ───────────
+        // ────────────────────────────
+        // 3️⃣ ANTI NICKNAME
+        // ────────────────────────────
+
         else if (num === "3") {
 
             const existing =
                 dataAnti.antiNickname.find(
                     item =>
-                    item.threadID === threadID
+                    item.threadID == threadID
                 );
 
             if (existing) {
@@ -177,7 +179,7 @@ module.exports.handleReply = async function ({
                 dataAnti.antiNickname =
                     dataAnti.antiNickname.filter(
                         item =>
-                        item.threadID !== threadID
+                        item.threadID != threadID
                     );
 
                 await api.sendMessage(
@@ -204,7 +206,10 @@ module.exports.handleReply = async function ({
             }
         }
 
-        // ── ANTI LEAVE ──────────────
+        // ────────────────────────────
+        // 4️⃣ ANTI LEAVE
+        // ────────────────────────────
+
         else if (num === "4") {
 
             dataAnti.antiout[threadID] =
@@ -220,7 +225,10 @@ module.exports.handleReply = async function ({
             );
         }
 
-        // ── ANTI EMOJI ──────────────
+        // ────────────────────────────
+        // 5️⃣ ANTI EMOJI
+        // ────────────────────────────
+
         else if (num === "5") {
 
             const info =
@@ -263,11 +271,14 @@ module.exports.handleReply = async function ({
             );
         }
 
-        // ── ANTI THEME ──────────────
+        // ────────────────────────────
+        // 6️⃣ ANTI THEME
+        // ────────────────────────────
+
         else if (num === "6") {
 
             const info =
-                await Threads.getInfo(
+                await api.getThreadInfo(
                     threadID
                 );
 
@@ -306,7 +317,10 @@ module.exports.handleReply = async function ({
             );
         }
 
-        // ── ANTI ADMIN ──────────────
+        // ────────────────────────────
+        // 7️⃣ ANTI ADMIN
+        // ────────────────────────────
+
         else if (num === "7") {
 
             const info =
@@ -341,25 +355,28 @@ module.exports.handleReply = async function ({
             );
         }
 
-        // ── STATUS ──────────────────
+        // ────────────────────────────
+        // 9️⃣ STATUS
+        // ────────────────────────────
+
         else if (num === "9") {
 
             const aiName =
                 dataAnti.boxname.find(
                     item =>
-                    item.threadID === threadID
+                    item.threadID == threadID
                 );
 
             const aiImage =
                 dataAnti.boximage.find(
                     item =>
-                    item.threadID === threadID
+                    item.threadID == threadID
                 );
 
             const aiNick =
                 dataAnti.antiNickname.find(
                     item =>
-                    item.threadID === threadID
+                    item.threadID == threadID
                 );
 
             await api.sendMessage(
@@ -393,6 +410,10 @@ module.exports.handleReply = async function ({
             );
         }
 
+        // ────────────────────────────
+        // INVALID
+        // ────────────────────────────
+
         else {
 
             await api.sendMessage(
@@ -407,32 +428,17 @@ module.exports.handleReply = async function ({
             dataAnti
         );
 
-        // ── SEND NEW MENU ───────────
-        api.sendMessage(
-
-            antiMenu(),
-
-            threadID,
-
-            (err, info) => {
-
-                if (err) return;
-
-                global.client.handleReply.push({
-                    name: module.exports.config.name,
-                    messageID: info.messageID,
-                    author: senderID,
-                    permssion
-                });
-            }
-        );
+        // ── ADD NEW HANDLE REPLY ────
+        global.client.handleReply.push({
+            name: module.exports.config.name,
+            messageID: event.messageID,
+            author: senderID,
+            permssion
+        });
 
     } catch (e) {
 
-        console.log(
-            "ANTI HANDLE ERROR:",
-            e
-        );
+        console.log(e.stack);
     }
 };
 
