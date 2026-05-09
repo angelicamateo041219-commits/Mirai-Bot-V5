@@ -1,4 +1,15 @@
-module.exports.config = { name: "antileave" };
+const { getData, setData } = require("../../database.js");
+
+module.exports.config = {
+    name: "antileave",
+    version: "2.0.0",
+    hasPermssion: 0,
+    credits: "ChatGPT",
+    description: "Prevent members from leaving",
+    commandCategory: "group",
+    usages: "/antileave on/off",
+    cooldowns: 5
+};
 
 module.exports.run = async ({ api, event, args }) => {
     const { threadID, senderID } = event;
@@ -8,9 +19,9 @@ module.exports.run = async ({ api, event, args }) => {
     let data = await getData("antiSystem") || {};
     if (!data.leave) data.leave = {};
 
-    let status = "";
+    let status = "❌";
 
-    if (args[0] == "on") {
+    if (args[0] === "on") {
         data.leave[threadID] = true;
         status = "ON ✅";
     } else {
