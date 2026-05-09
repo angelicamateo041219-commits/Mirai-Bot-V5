@@ -1,4 +1,15 @@
-module.exports.config = { name: "antitheme" };
+const { getData, setData } = require("../../database.js");
+
+module.exports.config = {
+    name: "antichangetheme",
+    version: "2.0.0",
+    hasPermssion: 0,
+    credits: "ChatGPT",
+    description: "Prevent theme change",
+    commandCategory: "group",
+    usages: "/antitheme on/off",
+    cooldowns: 5
+};
 
 module.exports.run = async ({ api, event, args, Threads }) => {
     const { threadID, senderID } = event;
@@ -8,9 +19,9 @@ module.exports.run = async ({ api, event, args, Threads }) => {
     let data = await getData("antiSystem") || {};
     if (!data.theme) data.theme = {};
 
-    let status = "";
+    let status = "❌";
 
-    if (args[0] == "on") {
+    if (args[0] === "on") {
         const info = await Threads.getInfo(threadID);
         data.theme[threadID] = info.threadTheme?.id;
         status = "ON ✅";
