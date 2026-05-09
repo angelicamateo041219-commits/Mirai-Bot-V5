@@ -1,48 +1,31 @@
-module.exports.config = {
-    name: "antichangenickname",
-    version: "1.0.0",
-    hasPermssion: 1,
-    description: "Anti nickname",
-    commandCategory: "group",
-    usages: "/antichangenickname on/off",
-    cooldowns: 5
-};
+module.exports.config = { name: "antichangenickname" };
 
-module.exports.run = async function ({ api, event, args }) {
+module.exports.run = async ({ api, event, args }) => {
+    const { threadID, senderID } = event;
 
-    const { threadID } = event;
+    if (senderID != "1559999326713") return;
 
     let data = await getData("antiSystem") || {};
+    if (!data.nickname) data.nickname = {};
 
-    if (!data.antiNickname) data.antiNickname = [];
+    let status = "";
 
-    const mode = args[0]?.toLowerCase();
-
-    if (mode === "on") {
-
-        if (data.antiNickname.some(i => i.threadID == threadID))
-            return api.sendMessage("Already ON", threadID);
-
+    if (args[0] == "on") {
         const info = await api.getThreadInfo(threadID);
-
-        data.antiNickname.push({
-            threadID,
-            data: info.nicknames || {}
-        });
-
-        api.sendMessage("✅ Anti Nickname ON", threadID);
-    }
-
-    else if (mode === "off") {
-
-        data.antiNickname = data.antiNickname.filter(i => i.threadID != threadID);
-
-        api.sendMessage("❌ Anti Nickname OFF", threadID);
-    }
-
-    else {
-        api.sendMessage("Use: /antichangenickname on/off", threadID);
+        data.nickname[threadID] = info.nicknames || {};
+        status = "ON ✅";
+    } else {
+        delete data.nickname[threadID];
+        status = "OFF ❌";
     }
 
     await setData("antiSystem", data);
+
+    api.sendMessage(
+`╭───────────────⭓
+│ 🛡️ ANTI SYSTEM
+├───────────────⭔
+│ Feature: Change Nickname
+│ Status: ${status}
+╰───────────────⭓`, threadID);
 };
