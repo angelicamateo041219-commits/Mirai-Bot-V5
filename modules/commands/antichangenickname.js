@@ -1,4 +1,15 @@
-module.exports.config = { name: "antichangenickname" };
+const { getData, setData } = require("../../database.js");
+
+module.exports.config = {
+    name: "antichangenickname",
+    version: "2.0.0",
+    hasPermssion: 0,
+    credits: "ChatGPT",
+    description: "Toggle anti nickname change",
+    commandCategory: "group",
+    usages: "/antichangenickname on/off",
+    cooldowns: 5
+};
 
 module.exports.run = async ({ api, event, args }) => {
     const { threadID, senderID } = event;
@@ -8,13 +19,13 @@ module.exports.run = async ({ api, event, args }) => {
     let data = await getData("antiSystem") || {};
     if (!data.nickname) data.nickname = {};
 
-    let status = "";
+    let status = "❌";
 
-    if (args[0] == "on") {
+    if (args[0] === "on") {
         const info = await api.getThreadInfo(threadID);
         data.nickname[threadID] = info.nicknames || {};
         status = "ON ✅";
-    } else {
+    } else if (args[0] === "off") {
         delete data.nickname[threadID];
         status = "OFF ❌";
     }
