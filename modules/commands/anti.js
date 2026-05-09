@@ -5,42 +5,36 @@ module.exports.config = {
     name: "anti",
     version: "7.0.0",
     hasPermssion: 1,
-    credits: "BraSL + ChatGPT (Direct Mode)",
-    description: "Anti system (direct command)",
+    credits: "BraSL + ChatGPT FIXED",
+    description: "Anti system (direct commands)",
     commandCategory: "group",
-    usages: "/anti <option>",
-    cooldowns: 3
+    usages: "/anti <type>",
+    cooldowns: 5
 };
 
-module.exports.run = async function ({
-    api,
-    event,
-    args,
-    Threads
-}) {
-    try {
+module.exports.run = async function ({ api, event, args }) {
 
-        const { threadID } = event;
-        const option = args[0];
+    const { threadID, messageID } = event;
 
-        // ── GET DATABASE ────────────
-        let dataAnti = await getData("antiSystem");
+    let dataAnti = await getData("antiSystem");
 
-        if (!dataAnti) {
-            dataAnti = {
-                boxname: [],
-                boximage: [],
-                antiNickname: [],
-                antiout: {},
-                antiemoji: {},
-                antitheme: {},
-                antiadmin: {}
-            };
-        }
+    if (!dataAnti) {
+        dataAnti = {
+            boxname: [],
+            boximage: [],
+            antiNickname: [],
+            antiout: {},
+            antiemoji: {},
+            antitheme: {},
+            antiadmin: {}
+        };
+    }
 
-        // ── NO ARG (SHOW MENU) ──────
-        if (!option) {
-            return api.sendMessage(
+    const type = args[0]?.toLowerCase();
+
+    // 📌 NO ARG = SHOW MENU
+    if (!type) {
+        return api.sendMessage(
 `╭───────────────⭓
 │ 🛡️ ANTI COMMANDS
 ├───────────────⭔
@@ -53,187 +47,163 @@ module.exports.run = async function ({
 │ /anti kickAdmin
 │ /anti status
 ╰───────────────⭓`,
-                threadID
-            );
-        }
+            threadID,
+            messageID
+        );
+    }
 
-        // ────────────────────────────
-        // CHANGE NAME
-        // ────────────────────────────
-        if (option === "changeName") {
+    // ────────────────
+    // CHANGE NAME
+    // ────────────────
+    if (type === "changename") {
 
-            const exist = dataAnti.boxname.find(x => x.threadID == threadID);
+        const exist = dataAnti.boxname.find(i => i.threadID == threadID);
 
-            if (exist) {
-                dataAnti.boxname = dataAnti.boxname.filter(x => x.threadID != threadID);
-                return api.sendMessage(`☑️ ${bold("Anti name:")} OFF`, threadID);
-            }
-
+        if (exist) {
+            dataAnti.boxname = dataAnti.boxname.filter(i => i.threadID != threadID);
+            api.sendMessage(`☑️ ${bold("Anti name:")} OFF`, threadID);
+        } else {
             const info = await api.getThreadInfo(threadID);
-            dataAnti.boxname.push({
-                threadID,
-                name: info.threadName
-            });
-
-            return api.sendMessage(`☑️ ${bold("Anti name:")} ON ✅`, threadID);
+            dataAnti.boxname.push({ threadID, name: info.threadName });
+            api.sendMessage(`☑️ ${bold("Anti name:")} ON ✅`, threadID);
         }
+    }
 
-        // ────────────────────────────
-        // CHANGE IMAGE
-        // ────────────────────────────
-        if (option === "changeImage") {
+    // ────────────────
+    // CHANGE IMAGE
+    // ────────────────
+    else if (type === "changeimage") {
 
-            const exist = dataAnti.boximage.find(x => x.threadID == threadID);
+        const exist = dataAnti.boximage.find(i => i.threadID == threadID);
 
-            if (exist) {
-                dataAnti.boximage = dataAnti.boximage.filter(x => x.threadID != threadID);
-                return api.sendMessage(`☑️ ${bold("Anti image:")} OFF`, threadID);
-            }
-
-            dataAnti.boximage.push({ threadID, enabled: true });
-
-            return api.sendMessage(`☑️ ${bold("Anti image:")} ON ✅`, threadID);
+        if (exist) {
+            dataAnti.boximage = dataAnti.boximage.filter(i => i.threadID != threadID);
+            api.sendMessage(`☑️ ${bold("Anti image:")} OFF`, threadID);
+        } else {
+            dataAnti.boximage.push({ threadID });
+            api.sendMessage(`☑️ ${bold("Anti image:")} ON ✅`, threadID);
         }
+    }
 
-        // ────────────────────────────
-        // CHANGE NICKNAME
-        // ────────────────────────────
-        if (option === "changeNickname") {
+    // ────────────────
+    // CHANGE NICKNAME
+    // ────────────────
+    else if (type === "changenickname") {
 
-            const exist = dataAnti.antiNickname.find(x => x.threadID == threadID);
+        const exist = dataAnti.antiNickname.find(i => i.threadID == threadID);
 
-            if (exist) {
-                dataAnti.antiNickname = dataAnti.antiNickname.filter(x => x.threadID != threadID);
-                return api.sendMessage(`☑️ ${bold("Anti nickname:")} OFF`, threadID);
-            }
-
+        if (exist) {
+            dataAnti.antiNickname = dataAnti.antiNickname.filter(i => i.threadID != threadID);
+            api.sendMessage(`☑️ ${bold("Anti nickname:")} OFF`, threadID);
+        } else {
             const info = await api.getThreadInfo(threadID);
+            dataAnti.antiNickname.push({ threadID, data: info.nicknames || {} });
+            api.sendMessage(`☑️ ${bold("Anti nickname:")} ON ✅`, threadID);
+        }
+    }
 
-            dataAnti.antiNickname.push({
-                threadID,
-                data: info.nicknames || {}
-            });
+    // ────────────────
+    // EMOJI
+    // ────────────────
+    else if (type === "changeemoji") {
 
-            return api.sendMessage(`☑️ ${bold("Anti nickname:")} ON ✅`, threadID);
+        const info = await api.getThreadInfo(threadID);
+        const emoji = info.emoji || "";
+
+        if (!dataAnti.antiemoji[threadID]) {
+            dataAnti.antiemoji[threadID] = { emoji, enabled: true };
+        } else {
+            dataAnti.antiemoji[threadID].enabled = !dataAnti.antiemoji[threadID].enabled;
         }
 
-        // ────────────────────────────
-        // CHANGE EMOJI
-        // ────────────────────────────
-        if (option === "changeEmoji") {
-
-            const info = await api.getThreadInfo(threadID);
-            const emoji = info.emoji || "";
-
-            if (!dataAnti.antiemoji[threadID]) {
-                dataAnti.antiemoji[threadID] = { emoji, enabled: true };
-            } else {
-                dataAnti.antiemoji[threadID].enabled =
-                    !dataAnti.antiemoji[threadID].enabled;
-                dataAnti.antiemoji[threadID].emoji = emoji;
-            }
-
-            return api.sendMessage(
-                `☑️ ${bold("Anti emoji:")} ${dataAnti.antiemoji[threadID].enabled ? "ON ✅" : "OFF"}`,
-                threadID
-            );
-        }
-
-        // ────────────────────────────
-        // CHANGE THEME
-        // ────────────────────────────
-        if (option === "changeTheme") {
-
-            const info = await Threads.getInfo(threadID);
-            const theme = info.threadTheme?.id || "";
-
-            if (!dataAnti.antitheme[threadID]) {
-                dataAnti.antitheme[threadID] = {
-                    themeid: theme,
-                    enabled: true
-                };
-            } else {
-                dataAnti.antitheme[threadID].enabled =
-                    !dataAnti.antitheme[threadID].enabled;
-                dataAnti.antitheme[threadID].themeid = theme;
-            }
-
-            return api.sendMessage(
-                `☑️ ${bold("Anti theme:")} ${dataAnti.antitheme[threadID].enabled ? "ON ✅" : "OFF"}`,
-                threadID
-            );
-        }
-
-        // ────────────────────────────
-        // LEAVE
-        // ────────────────────────────
-        if (option === "leave") {
-
-            dataAnti.antiout[threadID] =
-                !dataAnti.antiout[threadID];
-
-            return api.sendMessage(
-                `☑️ ${bold("Anti leave:")} ${dataAnti.antiout[threadID] ? "ON ✅" : "OFF"}`,
-                threadID
-            );
-        }
-
-        // ────────────────────────────
-        // ADMIN
-        // ────────────────────────────
-        if (option === "kickAdmin") {
-
-            const info = await api.getThreadInfo(threadID);
-
-            if (!info.adminIDs.some(i => i.id == api.getCurrentUserID())) {
-                return api.sendMessage(
-                    `❎ ${bold("Bot needs admin permission.")}`,
-                    threadID
-                );
-            }
-
-            dataAnti.antiadmin[threadID] =
-                !dataAnti.antiadmin[threadID];
-
-            return api.sendMessage(
-                `☑️ ${bold("Anti admin:")} ${dataAnti.antiadmin[threadID] ? "ON ✅" : "OFF"}`,
-                threadID
-            );
-        }
-
-        // ────────────────────────────
-        // STATUS
-        // ────────────────────────────
-        if (option === "status") {
-
-            const aiName = dataAnti.boxname.find(x => x.threadID == threadID);
-            const aiImage = dataAnti.boximage.find(x => x.threadID == threadID);
-            const aiNick = dataAnti.antiNickname.find(x => x.threadID == threadID);
-
-            return api.sendMessage(
-`╭───────────────⭓
-│ 🛡️ ANTI STATUS
-├───────────────⭔
-│ Name: ${aiName ? "✅ ON" : "❌ OFF"}
-│ Image: ${aiImage ? "✅ ON" : "❌ OFF"}
-│ Nickname: ${aiNick ? "✅ ON" : "❌ OFF"}
-│ Leave: ${dataAnti.antiout[threadID] ? "✅ ON" : "❌ OFF"}
-│ Emoji: ${dataAnti.antiemoji[threadID]?.enabled ? "✅ ON" : "❌ OFF"}
-│ Theme: ${dataAnti.antitheme[threadID]?.enabled ? "✅ ON" : "❌ OFF"}
-│ Admin: ${dataAnti.antiadmin[threadID] ? "✅ ON" : "❌ OFF"}
-╰───────────────⭓`,
-                threadID
-            );
-        }
-
-        // ── INVALID ────────────────
-        return api.sendMessage(
-            `❎ ${bold("Invalid option.")}`,
+        api.sendMessage(
+            `☑️ ${bold("Anti emoji:")} ${
+                dataAnti.antiemoji[threadID].enabled ? "ON ✅" : "OFF"
+            }`,
             threadID
         );
-
-        // ── SAVE (AUTO AFTER EVERY CHANGE) ─
-    } catch (e) {
-        console.log("ANTI ERROR:", e);
     }
+
+    // ────────────────
+    // THEME
+    // ────────────────
+    else if (type === "changetheme") {
+
+        const info = await api.getThreadInfo(threadID);
+        const theme = info.threadTheme?.id || "";
+
+        if (!dataAnti.antitheme[threadID]) {
+            dataAnti.antitheme[threadID] = { themeid: theme, enabled: true };
+        } else {
+            dataAnti.antitheme[threadID].enabled = !dataAnti.antitheme[threadID].enabled;
+        }
+
+        api.sendMessage(
+            `☑️ ${bold("Anti theme:")} ${
+                dataAnti.antitheme[threadID].enabled ? "ON ✅" : "OFF"
+            }`,
+            threadID
+        );
+    }
+
+    // ────────────────
+    // LEAVE
+    // ────────────────
+    else if (type === "leave") {
+
+        dataAnti.antiout[threadID] = !dataAnti.antiout[threadID];
+
+        api.sendMessage(
+            `☑️ ${bold("Anti leave:")} ${
+                dataAnti.antiout[threadID] ? "ON ✅" : "OFF"
+            }`,
+            threadID
+        );
+    }
+
+    // ────────────────
+    // ADMIN
+    // ────────────────
+    else if (type === "kickadmin") {
+
+        const info = await api.getThreadInfo(threadID);
+
+        if (!info.adminIDs.some(i => i.id == api.getCurrentUserID())) {
+            return api.sendMessage(`❎ ${bold("Bot needs admin.")}`, threadID);
+        }
+
+        dataAnti.antiadmin[threadID] = !dataAnti.antiadmin[threadID];
+
+        api.sendMessage(
+            `☑️ ${bold("Anti admin:")} ${
+                dataAnti.antiadmin[threadID] ? "ON ✅" : "OFF"
+            }`,
+            threadID
+        );
+    }
+
+    // ────────────────
+    // STATUS
+    // ────────────────
+    else if (type === "status") {
+
+        return api.sendMessage(
+`🛡️ ANTI STATUS
+
+Name: ${dataAnti.boxname.some(i=>i.threadID==threadID) ? "ON" : "OFF"}
+Image: ${dataAnti.boximage.some(i=>i.threadID==threadID) ? "ON" : "OFF"}
+Nickname: ${dataAnti.antiNickname.some(i=>i.threadID==threadID) ? "ON" : "OFF"}
+Leave: ${dataAnti.antiout[threadID] ? "ON" : "OFF"}
+Emoji: ${dataAnti.antiemoji[threadID]?.enabled ? "ON" : "OFF"}
+Theme: ${dataAnti.antitheme[threadID]?.enabled ? "ON" : "OFF"}
+Admin: ${dataAnti.antiadmin[threadID] ? "ON" : "OFF"}`,
+            threadID
+        );
+    }
+
+    else {
+        api.sendMessage(`❎ Invalid command`, threadID);
+    }
+
+    await setData("antiSystem", dataAnti);
 };
