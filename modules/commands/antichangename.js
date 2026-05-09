@@ -14,7 +14,7 @@ module.exports.config = {
 module.exports.run = async ({ api, event, args }) => {
     const { threadID, senderID } = event;
 
-    if (senderID != "61559999326713")
+    if (senderID != "61581773373775")
         return api.sendMessage("❎ Access Denied.", threadID);
 
     let data = await getData("antiSystem") || {};
