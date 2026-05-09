@@ -1,30 +1,43 @@
 const { getData, setData } = require("../../database.js");
 
-// ── INVITE REGEX (TEXT DETECTION) ──────────────────
+// ── NORMALIZE TEXT (ANTI-SPAM FORMAT) ─────────────
+function normalizeText(text) {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+// ── INVITE REGEX (UPGRADED) ───────────────────────
 const INVITE_REGEX = [
 
-    /sino\s+(gusto|want|trip).*(sali|join)/i,
-    /(tara|lipat|alis).*(gc|group|server|kabilang|ibang)/i,
-    /(may\s+(gc|server)\s+ako).*(sali|join|want|gusto)/i,
+    /sino\s*(gusto|want|trip)?.*(sali|join)/i,
     /(sali|join).*(gc|group|server)/i,
 
-    /(pm\s+me|chat\s+me|message\s+me).*(gc|server)/i,
+    /(pm|chat|message).*(ako|me).*(sali|join|gc|server)/i,
+    /pm\s*(nyo|mo|lang)?\s*(ako)?.*(sali|join|gc|server)/i,
 
-    /(laro\s+tayo).*(kabila|ibang\s+server)/i,
-    /(pvp).*(server|kabila|ibang)/i,
+    /(tara|lipat|alis).*(gc|group|server|kabilang|ibang)/i,
 
-    /(lipat\s+tayo|tara\s+na\s+sa)/i,
+    /(may\s+(gc|server)).*(sali|join|want|gusto)/i,
 
-    /(ibang\s+(server|gc)|kabilang\s+(server|gc))/i,
+    /(laro|pvp).*(kabila|ibang|server)/i,
+    /pvp.*(kabila|ibang)/i,
+
+    /(kabila|kabilang)/i,
 
     /(gc|server)\s+namin/i,
-
     /(may\s+gc\s+kami).*(sali|join)/i,
 
-    /(pasok\s+kayo).*(gc|server)/i
+    /(pasok\s+kayo).*(gc|server)/i,
+
+    /(sali|join).*(barkada|craft|server)/i,
+
+    /(sumali|join).*(kami|namin)?/i
 ];
 
-// ── MESSENGER GC LINK DETECTION ───────────────────
+// ── MESSENGER GC LINK ─────────────────────────────
 const MESSENGER_LINK_REGEX =
 /(https?:\/\/)?(www\.)?(m\.me\/j\/|messenger\.com\/t\/|fb\.com\/messages\/)/i;
 
@@ -35,49 +48,38 @@ const BYPASS_IDS = [
     "61581773373775"
 ];
 
-// ── CONTEXT FILTER ────────────────────────────────
+// ── CONTEXT FILTER (SMART) ───────────────────────
 function isExternalInvite(msg) {
 
     const SAFE_WORDS = [
         "dito",
         "server natin",
-        "server natin dito",
+        "team",
+        "event",
+        "palaro",
         "our server",
         "this server",
-        "same server",
-        "dito lang"
-    ];
-
-    const EXTERNAL_WORDS = [
-        "kabilang",
-        "ibang",
-        "other",
-        "another",
-        "gc namin",
-        "group namin",
-        "server namin"
+        "same server"
     ];
 
     const hasSafe = SAFE_WORDS.some(w => msg.includes(w));
-    const hasExternal = EXTERNAL_WORDS.some(w => msg.includes(w));
 
     if (hasSafe) return false;
-    if (hasExternal) return true;
 
-    return false;
+    return true; // allow detection if regex triggered
 }
 
-// ── DETECTION ──────────────────────────────────────
+// ── DETECT FUNCTION ───────────────────────────────
 function isInviteMessage(msg) {
     return INVITE_REGEX.some(regex => regex.test(msg));
 }
 
 module.exports.config = {
     name: "antiinvite",
-    version: "10.0.0",
+    version: "11.0.0",
     hasPermssion: 1,
     credits: "ChatGPT",
-    description: "Anti Invite (Messenger GC + Smart Detection)",
+    description: "Ultra Anti Invite System",
     commandCategory: "Group",
     usages: "/antiinvite on/off",
     cooldowns: 5
@@ -94,11 +96,12 @@ module.exports.handleEvent = async function ({ api, event }) {
     const threadData = await getData(`antiinvite_${threadID}`) || {};
     if (!threadData.enabled) return;
 
-    const msg = body.toLowerCase();
+    const msg = normalizeText(body);
 
-    // 🔥 Messenger GC link priority
-    const isMessengerLink = MESSENGER_LINK_REGEX.test(msg);
+    // 🔥 detect messenger link
+    const isMessengerLink = MESSENGER_LINK_REGEX.test(body.toLowerCase());
 
+    // 🔥 detection logic
     if (!isMessengerLink) {
         if (!isInviteMessage(msg)) return;
         if (!isExternalInvite(msg)) return;
@@ -135,10 +138,10 @@ module.exports.handleEvent = async function ({ api, event }) {
 ├───────────────⭔
 │ Dear ${name},
 │
-│ Sharing Messenger GC links
-│ or inviting members to
-│ external groups is strictly
-│ prohibited.
+│ Inviting members to
+│ external groups or
+│ sharing GC links is
+│ strictly prohibited.
 │
 │ 📜 GC Rule No. 4
 │
@@ -166,8 +169,8 @@ module.exports.handleEvent = async function ({ api, event }) {
 │ from the group.
 │
 │ Reason:
-│ Repeated external invites
-│ or Messenger GC links.
+│ Repeated invitations
+│ or sharing GC links.
 ╰───────────────⭓`,
                 threadID
             );
@@ -182,7 +185,6 @@ module.exports.run = async function ({ api, event }) {
 
     const { threadID, senderID, body } = event;
 
-    // 🔥 FIX: get args manually
     const args = body.split(" ").slice(1);
 
     const threadInfo = await api.getThreadInfo(threadID);
@@ -201,10 +203,10 @@ module.exports.run = async function ({ api, event }) {
 `╭───────────────⭓
 │ ✅ ANTI-INVITE ENABLED
 ├───────────────⭔
-│ Protection is now active.
+│ Advanced protection is ON.
 │
 │ Messenger GC links and
-│ external invites will be blocked.
+│ invite messages are blocked.
 ╰───────────────⭓`,
             threadID
         );
@@ -223,8 +225,5 @@ module.exports.run = async function ({ api, event }) {
         );
     }
 
-    return api.sendMessage(
-"Usage: /antiinvite on | off",
-        threadID
-    );
+    return api.sendMessage("Usage: /antiinvite on | off", threadID);
 };
