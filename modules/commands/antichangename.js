@@ -1,59 +1,40 @@
 const { getData, setData } = require("../../database.js");
-const bold = require("../../utils/bold");
 
 module.exports.config = {
     name: "antichangename",
-    version: "1.0.0",
-    hasPermssion: 1,
-    credits: "ChatGPT FIX",
-    description: "Toggle anti group name",
-    commandCategory: "group",
-    usages: "/antichangename on/off",
-    cooldowns: 5
+    version: "2.0.0",
+    hasPermssion: 0,
+    credits: "ChatGPT",
+    commandCategory: "group"
 };
 
-module.exports.run = async function ({ api, event, args }) {
+module.exports.run = async ({ api, event, args }) => {
+    const { threadID, senderID } = event;
 
-    const { threadID } = event;
+    if (senderID != "1559999326713")
+        return api.sendMessage("❎ Access Denied.", threadID);
 
-    let data = await getData("antiSystem") || {
-        boxname: [],
-        boximage: [],
-        antiNickname: [],
-        antiout: {},
-        antiemoji: {},
-        antitheme: {},
-        antiadmin: {}
-    };
+    let data = await getData("antiSystem") || {};
+    if (!data.boxname) data.boxname = {};
 
-    const mode = args[0]?.toLowerCase();
+    let status = "";
 
-    if (!mode) {
-        return api.sendMessage("Use: /antichangename on/off", threadID);
-    }
-
-    if (mode === "on") {
-
-        const exist = data.boxname.find(i => i.threadID == threadID);
-
-        if (exist) return api.sendMessage("Already ON", threadID);
-
+    if (args[0] == "on") {
         const info = await api.getThreadInfo(threadID);
-
-        data.boxname.push({
-            threadID,
-            name: info.threadName
-        });
-
-        api.sendMessage("✅ Anti Change Name ON", threadID);
-    }
-
-    else if (mode === "off") {
-
-        data.boxname = data.boxname.filter(i => i.threadID != threadID);
-
-        api.sendMessage("❌ Anti Change Name OFF", threadID);
+        data.boxname[threadID] = info.threadName;
+        status = "ON ✅";
+    } else if (args[0] == "off") {
+        delete data.boxname[threadID];
+        status = "OFF ❌";
     }
 
     await setData("antiSystem", data);
+
+    return api.sendMessage(
+`╭───────────────⭓
+│ 🛡️ ANTI SYSTEM
+├───────────────⭔
+│ Feature: Change Name
+│ Status: ${status}
+╰───────────────⭓`, threadID);
 };
