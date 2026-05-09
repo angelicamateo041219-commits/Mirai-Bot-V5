@@ -3,16 +3,16 @@ const bold = require("../../utils/bold");
 
 module.exports.config = {
     name: "anti",
-    version: "7.0.0",
+    version: "7.5.0",
     hasPermssion: 1,
-    credits: "BraSL + ChatGPT FIXED",
-    description: "Anti system (direct commands)",
+    credits: "BraSL + ChatGPT FINAL FIX",
+    description: "Anti system direct command (fixed)",
     commandCategory: "group",
     usages: "/anti <type>",
     cooldowns: 5
 };
 
-module.exports.run = async function ({ api, event, args }) {
+module.exports.run = async function ({ api, event }) {
 
     const { threadID, messageID } = event;
 
@@ -30,10 +30,10 @@ module.exports.run = async function ({ api, event, args }) {
         };
     }
 
-    const type = args[0]?.toLowerCase();
+    const text = (event.body || "").toLowerCase();
 
-    // 📌 NO ARG = SHOW MENU
-    if (!type) {
+    // 📌 SHOW MENU
+    if (text.trim() === "/anti") {
         return api.sendMessage(
 `╭───────────────⭓
 │ 🛡️ ANTI COMMANDS
@@ -55,7 +55,7 @@ module.exports.run = async function ({ api, event, args }) {
     // ────────────────
     // CHANGE NAME
     // ────────────────
-    if (type === "changename") {
+    if (text.includes("changename")) {
 
         const exist = dataAnti.boxname.find(i => i.threadID == threadID);
 
@@ -72,7 +72,7 @@ module.exports.run = async function ({ api, event, args }) {
     // ────────────────
     // CHANGE IMAGE
     // ────────────────
-    else if (type === "changeimage") {
+    else if (text.includes("changeimage")) {
 
         const exist = dataAnti.boximage.find(i => i.threadID == threadID);
 
@@ -88,7 +88,7 @@ module.exports.run = async function ({ api, event, args }) {
     // ────────────────
     // CHANGE NICKNAME
     // ────────────────
-    else if (type === "changenickname") {
+    else if (text.includes("changenickname")) {
 
         const exist = dataAnti.antiNickname.find(i => i.threadID == threadID);
 
@@ -105,7 +105,7 @@ module.exports.run = async function ({ api, event, args }) {
     // ────────────────
     // EMOJI
     // ────────────────
-    else if (type === "changeemoji") {
+    else if (text.includes("changeemoji")) {
 
         const info = await api.getThreadInfo(threadID);
         const emoji = info.emoji || "";
@@ -127,7 +127,7 @@ module.exports.run = async function ({ api, event, args }) {
     // ────────────────
     // THEME
     // ────────────────
-    else if (type === "changetheme") {
+    else if (text.includes("changetheme")) {
 
         const info = await api.getThreadInfo(threadID);
         const theme = info.threadTheme?.id || "";
@@ -149,7 +149,7 @@ module.exports.run = async function ({ api, event, args }) {
     // ────────────────
     // LEAVE
     // ────────────────
-    else if (type === "leave") {
+    else if (text.includes("leave")) {
 
         dataAnti.antiout[threadID] = !dataAnti.antiout[threadID];
 
@@ -164,7 +164,7 @@ module.exports.run = async function ({ api, event, args }) {
     // ────────────────
     // ADMIN
     // ────────────────
-    else if (type === "kickadmin") {
+    else if (text.includes("kickadmin")) {
 
         const info = await api.getThreadInfo(threadID);
 
@@ -185,7 +185,7 @@ module.exports.run = async function ({ api, event, args }) {
     // ────────────────
     // STATUS
     // ────────────────
-    else if (type === "status") {
+    else if (text.includes("status")) {
 
         return api.sendMessage(
 `🛡️ ANTI STATUS
@@ -202,7 +202,7 @@ Admin: ${dataAnti.antiadmin[threadID] ? "ON" : "OFF"}`,
     }
 
     else {
-        api.sendMessage(`❎ Invalid command`, threadID);
+        api.sendMessage(`❎ ${bold("Invalid command")}`, threadID);
     }
 
     await setData("antiSystem", dataAnti);
