@@ -14,7 +14,7 @@ module.exports.config = {
 };
 
 // ── BOT OWNER UID ──────────────────────────────
-const ownerID = "61559999326713";
+const ownerID = "61581773373775";
 
 // ── GET USER MONEY ─────────────────────────────
 async function getMoney(uid) {
