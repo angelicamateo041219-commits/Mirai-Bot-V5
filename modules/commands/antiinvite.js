@@ -1,6 +1,6 @@
 const { getData, setData } = require("../../database.js");
 
-// ── NORMALIZE TEXT (ANTI-SPAM FORMAT) ─────────────
+// ── NORMALIZE TEXT ────────────────────────────────
 function normalizeText(text) {
     return text
         .toLowerCase()
@@ -9,83 +9,63 @@ function normalizeText(text) {
         .trim();
 }
 
-// ── INVITE REGEX (UPGRADED) ───────────────────────
+// ── INVITE REGEX (BALANCED) ───────────────────────
 const INVITE_REGEX = [
 
-    /sino\s*(gusto|want|trip)?.*(sali|join)/i,
+    // sino gusto sumali
+    /sino\s*(gusto|want)?.*(sali|join)/i,
+
+    // join gc/server
     /(sali|join).*(gc|group|server)/i,
 
+    // pm invite
     /(pm|chat|message).*(ako|me).*(sali|join|gc|server)/i,
-    /pm\s*(nyo|mo|lang)?\s*(ako)?.*(sali|join|gc|server)/i,
+    /pm\s*(nyo|mo)?.*(sali|join)/i,
 
+    // tara / lipat
     /(tara|lipat|alis).*(gc|group|server|kabilang|ibang)/i,
 
+    // may server ako
     /(may\s+(gc|server)).*(sali|join|want|gusto)/i,
 
-    /(laro|pvp).*(kabila|ibang|server)/i,
-    /pvp.*(kabila|ibang)/i,
+    // pvp redirect
+    /(pvp|laro).*(kabila|ibang|server)/i,
 
-    /(kabila|kabilang)/i,
-
+    // gc namin
     /(gc|server)\s+namin/i,
-    /(may\s+gc\s+kami).*(sali|join)/i,
 
-    /(pasok\s+kayo).*(gc|server)/i,
-
-    /(sali|join).*(barkada|craft|server)/i,
-
-    /(sumali|join).*(kami|namin)?/i
+    // join without gc word
+    /(sumali|join).*(kami|namin)/i
 ];
 
-// ── MESSENGER GC LINK ─────────────────────────────
+// ── MESSENGER LINK ───────────────────────────────
 const MESSENGER_LINK_REGEX =
 /(https?:\/\/)?(www\.)?(m\.me\/j\/|messenger\.com\/t\/|fb\.com\/messages\/)/i;
 
 const RESET_TIME = 7 * 24 * 60 * 60 * 1000;
 
-// ── BYPASS ─────────────────────────────────────────
+// ── BYPASS ───────────────────────────────────────
 const BYPASS_IDS = [
     "61581773373775"
 ];
 
-// ── CONTEXT FILTER (SMART) ───────────────────────
-function isExternalInvite(msg) {
-
-    const SAFE_WORDS = [
-        "dito",
-        "server natin",
-        "team",
-        "event",
-        "palaro",
-        "our server",
-        "this server",
-        "same server"
-    ];
-
-    const hasSafe = SAFE_WORDS.some(w => msg.includes(w));
-
-    if (hasSafe) return false;
-
-    return true; // allow detection if regex triggered
-}
-
-// ── DETECT FUNCTION ───────────────────────────────
+// ── DETECT FUNCTION ──────────────────────────────
 function isInviteMessage(msg) {
     return INVITE_REGEX.some(regex => regex.test(msg));
 }
 
 module.exports.config = {
     name: "antiinvite",
-    version: "11.0.0",
+    version: "12.0.0",
     hasPermssion: 1,
-    credits: "ChatGPT",
-    description: "Ultra Anti Invite System",
+    credits: "ChatGPT FIXED",
+    description: "Stable Anti Invite",
     commandCategory: "Group",
     usages: "/antiinvite on/off",
     cooldowns: 5
 };
 
-// ── HANDLE CHAT ───────────────────────────────────
+// ── HANDLE CHAT ──────────────────────────────────
 module.exports.handleEvent = async function ({ api, event }) {
 
     const { threadID, senderID, body } = event;
@@ -98,13 +78,12 @@ module.exports.handleEvent = async function ({ api, event }) {
 
     const msg = normalizeText(body);
 
-    // 🔥 detect messenger link
+    // 🔥 Messenger link (priority)
     const isMessengerLink = MESSENGER_LINK_REGEX.test(body.toLowerCase());
 
-    // 🔥 detection logic
+    // 🔥 Text detection
     if (!isMessengerLink) {
         if (!isInviteMessage(msg)) return;
-        if (!isExternalInvite(msg)) return;
     }
 
     // ── CHECK ADMIN ───────────────────────────────
@@ -112,7 +91,7 @@ module.exports.handleEvent = async function ({ api, event }) {
     const isAdmin = threadInfo.adminIDs.some(a => a.id == senderID);
     if (isAdmin) return;
 
-    // ── USER DATA ─────────────────────────────────
+    // ── USER DATA ────────────────────────────────
     let userData = await getData(`antiinvite_warn_${threadID}_${senderID}`) || {
         count: 0,
         lastWarn: 0
@@ -138,10 +117,9 @@ module.exports.handleEvent = async function ({ api, event }) {
 ├───────────────⭔
 │ Dear ${name},
 │
-│ Inviting members to
-│ external groups or
-│ sharing GC links is
-│ strictly prohibited.
+│ Inviting members to other
+│ groups or sharing GC links
+│ is strictly prohibited.
 │
 │ 📜 GC Rule No. 4
 │
@@ -169,8 +147,7 @@ module.exports.handleEvent = async function ({ api, event }) {
 │ from the group.
 │
 │ Reason:
-│ Repeated invitations
-│ or sharing GC links.
+│ Repeated invite attempts.
 ╰───────────────⭓`,
                 threadID
             );
@@ -180,11 +157,10 @@ module.exports.handleEvent = async function ({ api, event }) {
     }
 };
 
-// ── COMMAND (FIXED) ───────────────────────────────
+// ── COMMAND ───────────────────────────────────────
 module.exports.run = async function ({ api, event }) {
 
     const { threadID, senderID, body } = event;
-
     const args = body.split(" ").slice(1);
 
     const threadInfo = await api.getThreadInfo(threadID);
@@ -199,30 +175,13 @@ module.exports.run = async function ({ api, event }) {
     if (option === "on") {
         await setData(`antiinvite_${threadID}`, { enabled: true });
 
-        return api.sendMessage(
-`╭───────────────⭓
-│ ✅ ANTI-INVITE ENABLED
-├───────────────⭔
-│ Advanced protection is ON.
-│
-│ Messenger GC links and
-│ invite messages are blocked.
-╰───────────────⭓`,
-            threadID
-        );
+        return api.sendMessage("✅ Anti-invite enabled.", threadID);
     }
 
     if (option === "off") {
         await setData(`antiinvite_${threadID}`, { enabled: false });
 
-        return api.sendMessage(
-`╭───────────────⭓
-│ ❌ ANTI-INVITE DISABLED
-├───────────────⭔
-│ Protection turned off.
-╰───────────────⭓`,
-            threadID
-        );
+        return api.sendMessage("❌ Anti-invite disabled.", threadID);
     }
 
     return api.sendMessage("Usage: /antiinvite on | off", threadID);
