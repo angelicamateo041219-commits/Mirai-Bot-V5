@@ -5,7 +5,10 @@ module.exports.config = {
     version: "2.0.0",
     hasPermssion: 0,
     credits: "ChatGPT",
-    commandCategory: "group"
+    description: "Toggle anti group name change",
+    commandCategory: "group",
+    usages: "/antichangename on/off",
+    cooldowns: 5
 };
 
 module.exports.run = async ({ api, event, args }) => {
@@ -17,24 +20,27 @@ module.exports.run = async ({ api, event, args }) => {
     let data = await getData("antiSystem") || {};
     if (!data.boxname) data.boxname = {};
 
-    let status = "";
+    let status = "❌";
 
-    if (args[0] == "on") {
+    if (args[0] === "on") {
         const info = await api.getThreadInfo(threadID);
         data.boxname[threadID] = info.threadName;
         status = "ON ✅";
-    } else if (args[0] == "off") {
+    } else if (args[0] === "off") {
         delete data.boxname[threadID];
         status = "OFF ❌";
     }
 
     await setData("antiSystem", data);
 
-    return api.sendMessage(
+    api.sendMessage(
 `╭───────────────⭓
 │ 🛡️ ANTI SYSTEM
 ├───────────────⭔
 │ Feature: Change Name
+│ Status: ${status}
+╰───────────────⭓`, threadID);
+};│ Feature: Change Name
 │ Status: ${status}
 ╰───────────────⭓`, threadID);
 };
